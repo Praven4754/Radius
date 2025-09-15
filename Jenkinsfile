@@ -38,7 +38,6 @@ pipeline {
             steps {
                 sh '''
                     cp $WORKSPACE/compose3.yml $WORKSPACE/terraform/
-                    cp $WORKSPACE/dependency.sh $WORKSPACE/terraform/
                 '''
             }
         }
