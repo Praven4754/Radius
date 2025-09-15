@@ -41,6 +41,15 @@ pipeline {
                 '''
             }
         }
+        
+        stage('Debug Terraform Folder') {
+            steps {
+                dir('terraform') {
+                    sh 'echo "Listing all files in terraform folder:"'
+                    sh 'ls -lR'
+                }
+            }
+        }
 
         stage('Terraform Init') {
             steps {
