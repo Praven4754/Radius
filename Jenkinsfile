@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        AWS_CREDENTIALS_ID = 'my-aws-creds'  // Your Jenkins AWS credentials ID
+        AWS_CREDENTIALS_ID = 'my-aws-creds'
     }
 
     stages {
@@ -11,24 +11,24 @@ pipeline {
                 git(
                     branch: 'main',
                     url: 'https://github.com/Bharathraj5002/Radis.git',
-                    credentialsId: 'github-creds'  // Your GitHub credentials ID
+                    credentialsId: 'github-creds'
                 )
             }
         }
 
         stage('Debug Workspace') {
             steps {
-                sh 'ls -lR $WORKSPACE'  // Recursively list workspace files for troubleshooting
+                sh 'ls -lR $WORKSPACE'
             }
         }
 
         stage('Prepare .env from Secret File') {
             steps {
                 withCredentials([file(credentialsId: 'env_file', variable: 'ENV_FILE_PATH')]) {
-                    script {
-                        // Copy secret .env file directly into terraform folder (writable path)
-                        sh "cp ${ENV_FILE_PATH} $WORKSPACE/terraform/.env"
-                    }
+                    sh '''
+                        mkdir -p $WORKSPACE/terraform
+                        cp ${ENV_FILE_PATH} $WORKSPACE/terraform/.env
+                    '''
                 }
             }
         }
@@ -44,7 +44,7 @@ pipeline {
 
         stage('Terraform Init') {
             steps {
-                withCredentials([[
+                withCredentials([[ 
                     $class: 'AmazonWebServicesCredentialsBinding',
                     credentialsId: env.AWS_CREDENTIALS_ID,
                     accessKeyVariable: 'AWS_ACCESS_KEY_ID',
@@ -59,7 +59,7 @@ pipeline {
 
         stage('Terraform Plan') {
             steps {
-                withCredentials([[
+                withCredentials([[ 
                     $class: 'AmazonWebServicesCredentialsBinding',
                     credentialsId: env.AWS_CREDENTIALS_ID,
                     accessKeyVariable: 'AWS_ACCESS_KEY_ID',
@@ -74,7 +74,7 @@ pipeline {
 
         stage('Terraform Apply') {
             steps {
-                withCredentials([[
+                withCredentials([[ 
                     $class: 'AmazonWebServicesCredentialsBinding',
                     credentialsId: env.AWS_CREDENTIALS_ID,
                     accessKeyVariable: 'AWS_ACCESS_KEY_ID',
