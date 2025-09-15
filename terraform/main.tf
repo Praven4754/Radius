@@ -100,7 +100,7 @@ resource "aws_instance" "radius" {
 
   # Upload .env file
   provisioner "file" {
-    source      = "${path.module}/../.env"
+    source      = "${path.module}/.env"
     destination = "/tmp/.env"
 
     connection {
