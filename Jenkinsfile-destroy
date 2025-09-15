@@ -6,54 +6,30 @@ pipeline {
     }
 
     stages {
-        stage('Checkout Code') {
-            steps {
-                git(
-                    branch: 'main',
-                    url: 'https://github.com/Bharathraj5002/Radis.git',
-                    credentialsId: 'github-creds'
-                )
-            }
-        }
-
-        stage('Debug Workspace') {
-            steps {
-                sh 'ls -lR $WORKSPACE'
-            }
-        }
-
         stage('Terraform Init') {
             steps {
-                withCredentials([[
+                withCredentials([[ 
                     $class: 'AmazonWebServicesCredentialsBinding',
                     credentialsId: env.AWS_CREDENTIALS_ID,
                     accessKeyVariable: 'AWS_ACCESS_KEY_ID',
                     secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
                 ]]) {
-                    dir('terraform') {
+                    dir('/var/jenkins_home/workspace/Radis/terraform') {
                         sh 'terraform init'
                     }
                 }
             }
         }
 
-        stage('Confirm Destroy') {
-            steps {
-                script {
-                    input message: '⚠️ Are you sure you want to destroy ALL Terraform resources?', ok: 'Yes, Destroy'
-                }
-            }
-        }
-
         stage('Terraform Destroy') {
             steps {
-                withCredentials([[
+                withCredentials([[ 
                     $class: 'AmazonWebServicesCredentialsBinding',
                     credentialsId: env.AWS_CREDENTIALS_ID,
                     accessKeyVariable: 'AWS_ACCESS_KEY_ID',
                     secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
                 ]]) {
-                    dir('terraform') {
+                    dir('/var/jenkins_home/workspace/Radis/terraform') {
                         sh 'terraform destroy -auto-approve'
                     }
                 }
@@ -66,10 +42,10 @@ pipeline {
             echo 'Destroy pipeline finished.'
         }
         success {
-            echo '✅ Terraform destroy successful!'
+            echo 'Terraform resources destroyed successfully!'
         }
         failure {
-            echo '❌ Terraform destroy failed!'
+            echo 'Terraform destroy failed!'
         }
     }
 }
