@@ -9,3 +9,5 @@ pkgportal-k8s.yaml
 k8s/
 data/
 jenkins_home/
+.gitignore
+
