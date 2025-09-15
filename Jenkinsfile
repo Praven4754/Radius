@@ -11,7 +11,7 @@ pipeline {
                 git(
                     branch: 'main',
                     url: 'https://github.com/Bharathraj5002/Radis.git',
-                    credentialsId: 'github-creds'  // Replace with your GitHub creds ID
+                    credentialsId: 'github-creds'  // Replace with your GitHub credentials ID
                 )
             }
         }
@@ -20,8 +20,8 @@ pipeline {
             steps {
                 withCredentials([file(credentialsId: 'env_file', variable: 'ENV_FILE_PATH')]) {
                     script {
-                        // Copy secret .env file to repo root (already expected location)
-                        sh "cp ${ENV_FILE_PATH} .env"
+                        // Copy secret .env file directly into terraform folder (writable path)
+                        sh "cp ${ENV_FILE_PATH} terraform/.env"
                     }
                 }
             }
@@ -29,11 +29,10 @@ pipeline {
 
         stage('Prepare Terraform Files') {
             steps {
-                // Copy compose3.yml and dependency.sh into terraform directory since Terraform runs there
+                // Copy other necessary files into terraform directory
                 sh '''
                     cp ../compose3.yml terraform/
                     cp ../dependency.sh terraform/
-                    cp .env terraform/
                 '''
             }
         }
@@ -83,8 +82,15 @@ pipeline {
             }
         }
 
-        // Optional Docker deploy stage here
-
+        // Optional: Add Docker deploy stage here if necessary
+        // stage('Deploy Docker App') {
+        //     steps {
+        //         dir('app') {
+        //             sh 'docker-compose down || true'
+        //             sh 'docker-compose up -d'
+        //         }
+        //     }
+        // }
     }
 
     post {
