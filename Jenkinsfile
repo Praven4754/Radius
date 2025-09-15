@@ -27,6 +27,7 @@ pipeline {
                 withCredentials([file(credentialsId: 'env_file', variable: 'ENV_FILE_PATH')]) {
                     sh '''
                         mkdir -p $WORKSPACE/terraform
+                        chmod -R u+w $WORKSPACE/terraform
                         cp ${ENV_FILE_PATH} $WORKSPACE/terraform/.env
                     '''
                 }
