@@ -108,6 +108,7 @@ pipeline {
                             ssh -o StrictHostKeyChecking=no -i $TERRAFORM_DIR/${env.PEM_FILE} ubuntu@${env.EC2_PUBLIC_IP} << EOF
                                 echo "$GH_TOKEN" | docker login ghcr.io -u "$GH_USERNAME" --password-stdin
                                 cd app
+                                mkdir -p ./data/grafana
                                 sudo chown -R 472:472 ./data/grafana || echo "Directory not found, skipping chown"
                                 docker compose up -d
 EOF
