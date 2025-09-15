@@ -1,7 +1,5 @@
 pipeline {
-    agent {
-        docker { image 'hashicorp/terraform:1.6.0' } // Terraform Docker image
-    }
+    agent any
     environment {
         AWS_ACCESS_KEY_ID = credentials('aws-access-key-id')
         AWS_SECRET_ACCESS_KEY = credentials('aws-access-key-id')
