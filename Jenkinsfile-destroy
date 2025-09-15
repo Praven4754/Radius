@@ -14,7 +14,7 @@ pipeline {
                     accessKeyVariable: 'AWS_ACCESS_KEY_ID',
                     secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
                 ]]) {
-                    dir('/var/jenkins_home/workspace/Radis/terraform') {
+                    dir('/var/jenkins_home/workspace/Radius/terraform') {
                         sh 'terraform init'
                     }
                 }
@@ -29,7 +29,7 @@ pipeline {
                     accessKeyVariable: 'AWS_ACCESS_KEY_ID',
                     secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
                 ]]) {
-                    dir('/var/jenkins_home/workspace/Radis/terraform') {
+                    dir('/var/jenkins_home/workspace/Radius/terraform') {
                         sh 'terraform destroy -auto-approve'
                     }
                 }
