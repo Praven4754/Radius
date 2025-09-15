@@ -1,0 +1,11 @@
+.env
+pkgportal-k8s.yml
+pkgportal-k8s.yaml
+.terraform.lock.hcl
+*.pem
+*.tfstate
+*.tfstate.backup
+.terraform/
+k8s/
+data/
+jenkins_home/
