@@ -3,6 +3,7 @@ pipeline {
 
     environment {
         AWS_CREDENTIALS_ID = 'my-aws-creds'
+        TERRAFORM_DIR = "$WORKSPACE/terraform"
     }
 
     stages {
@@ -26,9 +27,9 @@ pipeline {
             steps {
                 withCredentials([file(credentialsId: 'env_file', variable: 'ENV_FILE_PATH')]) {
                     sh '''
-                        mkdir -p $WORKSPACE/terraform
-                        chmod -R u+w $WORKSPACE/terraform
-                        cp ${ENV_FILE_PATH} $WORKSPACE/terraform/.env
+                        mkdir -p $TERRAFORM_DIR
+                        chmod -R u+w $TERRAFORM_DIR
+                        cp ${ENV_FILE_PATH} $TERRAFORM_DIR/.env
                     '''
                 }
             }
@@ -36,12 +37,10 @@ pipeline {
 
         stage('Prepare Terraform Files') {
             steps {
-                sh '''
-                    cp $WORKSPACE/compose3.yml $WORKSPACE/terraform/
-                '''
+                sh "cp $WORKSPACE/compose3.yml $TERRAFORM_DIR/"
             }
         }
-        
+
         stage('Debug Terraform Folder') {
             steps {
                 dir('terraform') {
@@ -92,6 +91,36 @@ pipeline {
                     dir('terraform') {
                         sh 'terraform apply -auto-approve tfplan'
                     }
+                }
+            }
+        }
+
+        stage('Get Terraform Outputs') {
+            steps {
+                dir('terraform') {
+                    script {
+                        // Get public IP and PEM file path
+                        env.EC2_PUBLIC_IP = sh(script: "terraform output -raw public_ip", returnStdout: true).trim()
+                        env.PEM_FILE = sh(script: "terraform output -raw private_key_file", returnStdout: true).trim()
+                        echo "EC2 Public IP: ${env.EC2_PUBLIC_IP}"
+                        echo "PEM File: ${env.PEM_FILE}"
+                    }
+                }
+            }
+        }
+
+        stage('Deploy App on EC2') {
+            steps {
+                script {
+                    // SSH and run commands
+                    sh """
+                        chmod 400 $TERRAFORM_DIR/${env.PEM_FILE}
+                        ssh -o StrictHostKeyChecking=no -i $TERRAFORM_DIR/${env.PEM_FILE} ec2-user@${env.EC2_PUBLIC_IP} << 'EOF'
+                            cd app
+                            sudo chown -R 472:472 ./data/grafana
+                            docker compose up -d
+                        EOF
+                    """
                 }
             }
         }
