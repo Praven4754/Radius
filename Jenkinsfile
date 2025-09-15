@@ -115,7 +115,7 @@ pipeline {
                     // SSH and run commands
                     sh """
                         chmod 400 $TERRAFORM_DIR/${env.PEM_FILE}
-                        ssh -o StrictHostKeyChecking=no -i $TERRAFORM_DIR/${env.PEM_FILE} ec2-user@${env.EC2_PUBLIC_IP} << 'EOF'
+                        ssh -o StrictHostKeyChecking=no -i $TERRAFORM_DIR/${env.PEM_FILE} ubuntu@${env.EC2_PUBLIC_IP} << 'EOF'
                             cd app
                             sudo chown -R 472:472 ./data/grafana
                             docker compose up -d
