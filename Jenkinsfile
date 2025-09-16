@@ -6,6 +6,19 @@ pipeline {
         TERRAFORM_DIR      = "$WORKSPACE/terraform"
     }
 
+    parameters {
+        string(
+            name: 'INSTANCE_TYPE',
+            defaultValue: 't2.micro',
+            description: 'EC2 instance type (e.g., t2.micro, t3.medium)'
+        )
+        string(
+            name: 'VOLUME_SIZE',
+            defaultValue: '20',
+            description: 'Root volume size in GB'
+        )
+    }
+
     stages {
         stage('Checkout Code') {
             steps {
@@ -59,7 +72,12 @@ pipeline {
                     secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
                 ]]) {
                     dir('terraform') {
-                        sh 'terraform plan -out=tfplan'
+                        sh """
+                            terraform plan \
+                              -var instance_type=${params.INSTANCE_TYPE} \
+                              -var volume_size=${params.VOLUME_SIZE} \
+                              -out=tfplan
+                        """
                     }
                 }
             }
