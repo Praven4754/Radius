@@ -7,6 +7,12 @@ pipeline {
             choices: ['t2.micro', 't2.small', 't2.medium', 't3.micro', 't3.small'],
             description: 'Select the EC2 instance type to create'
         )
+
+        string(
+            name: 'STORAGE_SIZE',
+            defaultValue: '20',
+            description: 'Enter the storage size (in GB) for root volume'
+        )
     }
 
     environment {
@@ -69,7 +75,8 @@ pipeline {
                     dir('terraform') {
                         sh """
                             terraform plan -out=tfplan \
-                              -var="instance_type=${params.INSTANCE_TYPE}"
+                              -var="instance_type=${params.INSTANCE_TYPE}" \
+                              -var="volume_size=${params.STORAGE_SIZE}"
                         """
                     }
                 }
@@ -85,9 +92,7 @@ pipeline {
                     secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
                 ]]) {
                     dir('terraform') {
-                        sh """
-                            terraform apply -auto-approve tfplan
-                        """
+                        sh 'terraform apply -auto-approve tfplan'
                     }
                 }
             }
@@ -131,7 +136,7 @@ EOF
             echo 'Pipeline finished.'
         }
         success {
-            echo "Deployment successful with EC2 Instance Type: ${params.INSTANCE_TYPE}"
+            echo "Deployment successful! EC2 Type: ${params.INSTANCE_TYPE}, Storage: ${params.STORAGE_SIZE} GB"
         }
         failure {
             echo 'Pipeline failed!'
