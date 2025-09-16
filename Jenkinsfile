@@ -129,7 +129,7 @@ pipeline {
                     script {
                         sh """
                             chmod 400 $TERRAFORM_DIR/${env.PEM_FILE}
-                            ssh -o StrictHostKeyChecking=no -i $TERRAFORM_DIR/${env.PEM_FILE} ubuntu@${env.EC2_PUBLIC_IP} << EOF
+                            ssh -o StrictHostKeyChecking=no -i $TERRAFORM_DIR/${env.PEM_FILE} ubuntu@${env.EC2_PUBLIC_IP} << 'EOF'
                                 echo "$GH_TOKEN" | docker login ghcr.io -u "$GH_USERNAME" --password-stdin
                                 cd app
                                 mkdir -p ./data/grafana
@@ -137,6 +137,7 @@ pipeline {
                                 docker compose up -d
                             EOF
                         """
+
                     }
                 }
             }
