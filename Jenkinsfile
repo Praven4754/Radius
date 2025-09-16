@@ -7,6 +7,16 @@ pipeline {
     }
 
     parameters {
+        string(
+            name: 'CUSTOMER_NAME',
+            defaultValue: '',
+            description: 'Enter the customer name'
+        )
+        string(
+            name: 'CUSTOMER_EMAIL',
+            defaultValue: '',
+            description: 'Enter the customer email address'
+        )
         choice(
             name: 'INSTANCE_TYPE',
             choices: ['t2.micro', 't2.small', 't2.medium', 't3.micro', 't3.small'],
