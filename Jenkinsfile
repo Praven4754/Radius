@@ -1,6 +1,14 @@
 pipeline {
     agent any
 
+    parameters {
+        choice(
+            name: 'INSTANCE_TYPE',
+            choices: ['t2.micro', 't2.small', 't2.medium', 't3.micro', 't3.small'],
+            description: 'Select the EC2 instance type to create'
+        )
+    }
+
     environment {
         AWS_CREDENTIALS_ID = 'my-aws-creds'
         TERRAFORM_DIR = "$WORKSPACE/terraform"
@@ -14,12 +22,6 @@ pipeline {
                     url: 'https://github.com/Bharathraj5002/Radius.git',
                     credentialsId: 'github-creds'
                 )
-            }
-        }
-
-        stage('Debug Workspace') {
-            steps {
-                sh 'ls -lR $WORKSPACE'
             }
         }
 
@@ -65,7 +67,10 @@ pipeline {
                     secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
                 ]]) {
                     dir('terraform') {
-                        sh 'terraform plan -out=tfplan'
+                        sh """
+                            terraform plan -out=tfplan \
+                              -var="instance_type=${params.INSTANCE_TYPE}"
+                        """
                     }
                 }
             }
@@ -80,7 +85,9 @@ pipeline {
                     secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
                 ]]) {
                     dir('terraform') {
-                        sh 'terraform apply -auto-approve tfplan'
+                        sh """
+                            terraform apply -auto-approve tfplan
+                        """
                     }
                 }
             }
@@ -124,7 +131,7 @@ EOF
             echo 'Pipeline finished.'
         }
         success {
-            echo 'Deployment successful!'
+            echo "Deployment successful with EC2 Instance Type: ${params.INSTANCE_TYPE}"
         }
         failure {
             echo 'Pipeline failed!'
