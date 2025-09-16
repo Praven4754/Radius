@@ -17,6 +17,7 @@ pipeline {
 
     environment {
         AWS_CREDENTIALS_ID = 'my-aws-creds'
+        TERRAFORM_DIR = "$WORKSPACE/terraform"
     }
 
     stages {
@@ -30,19 +31,13 @@ pipeline {
             }
         }
 
-        stage('Debug Workspace') {
-            steps {
-                sh 'ls -lR $WORKSPACE'
-            }
-        }
-
         stage('Prepare .env from Secret File') {
             steps {
                 withCredentials([file(credentialsId: 'env_file', variable: 'ENV_FILE_PATH')]) {
                     sh '''
-                        mkdir -p $WORKSPACE/terraform
-                        chmod -R u+w $WORKSPACE/terraform
-                        cp ${ENV_FILE_PATH} $WORKSPACE/terraform/.env
+                        mkdir -p $TERRAFORM_DIR
+                        chmod -R u+w $TERRAFORM_DIR
+                        cp ${ENV_FILE_PATH} $TERRAFORM_DIR/.env
                     '''
                 }
             }
@@ -50,18 +45,7 @@ pipeline {
 
         stage('Prepare Terraform Files') {
             steps {
-                sh '''
-                    cp $WORKSPACE/compose3.yml $WORKSPACE/terraform/
-                '''
-            }
-        }
-        
-        stage('Debug Terraform Folder') {
-            steps {
-                dir('terraform') {
-                    sh 'echo "Listing all files in terraform folder:"'
-                    sh 'ls -lR'
-                }
+                sh "cp $WORKSPACE/compose3.yml $TERRAFORM_DIR/"
             }
         }
 
@@ -89,7 +73,6 @@ pipeline {
                     secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
                 ]]) {
                     dir('terraform') {
-                        // Pass the parameters to Terraform
                         sh """
                             terraform plan -out=tfplan \
                               -var="instance_type=${params.INSTANCE_TYPE}" \
@@ -110,6 +93,38 @@ pipeline {
                 ]]) {
                     dir('terraform') {
                         sh 'terraform apply -auto-approve tfplan'
+                    }
+                }
+            }
+        }
+
+        stage('Get Terraform Outputs') {
+            steps {
+                dir('terraform') {
+                    script {
+                        env.EC2_PUBLIC_IP = sh(script: "terraform output -raw public_ip", returnStdout: true).trim()
+                        env.PEM_FILE = sh(script: "terraform output -raw private_key_file", returnStdout: true).trim()
+                        echo "EC2 Public IP: ${env.EC2_PUBLIC_IP}"
+                        echo "PEM File: ${env.PEM_FILE}"
+                    }
+                }
+            }
+        }
+
+        stage('Deploy App on EC2') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'ghcr-creds', usernameVariable: 'GH_USERNAME', passwordVariable: 'GH_TOKEN')]) {
+                    script {
+                        sh """
+                            chmod 400 $TERRAFORM_DIR/${env.PEM_FILE}
+                            ssh -o StrictHostKeyChecking=no -i $TERRAFORM_DIR/${env.PEM_FILE} ubuntu@${env.EC2_PUBLIC_IP} << EOF
+                                echo "$GH_TOKEN" | docker login ghcr.io -u "$GH_USERNAME" --password-stdin
+                                cd app
+                                mkdir -p ./data/grafana
+                                sudo chown -R 472:472 ./data/grafana || echo "Directory not found, skipping chown"
+                                docker compose up -d
+EOF
+                        """
                     }
                 }
             }
