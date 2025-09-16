@@ -7,10 +7,10 @@ pipeline {
     }
 
     parameters {
-        string(
+        choice(
             name: 'INSTANCE_TYPE',
-            defaultValue: 't2.micro',
-            description: 'EC2 instance type (e.g., t2.micro, t3.medium)'
+            choices: ['t2.micro', 't2.small', 't2.medium', 't3.micro', 't3.small'],
+            description: 'Select the EC2 instance type to create'
         )
         string(
             name: 'VOLUME_SIZE',
