@@ -7,7 +7,7 @@ variable "region" {
 variable "instance_name" {
   description = "Name of the EC2 instance"
   type        = string
-  default     = "radius-instance"
+  default     = "radius"
 }
 
 variable "instance_type" {
